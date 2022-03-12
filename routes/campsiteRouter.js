@@ -16,7 +16,7 @@ campsiteRouter.route('/')
     .catch(err => next(err));
 })
 
-.post(authenticate.verifyUser, (req, res, next) => {
+.post(authenticate.verifyUser, authenticate.verifyAdmin,(req, res, next) => {
     Campsite.create(req.body)
     .then(campsite => {
         console.log('Campsite Created ', campsite);
@@ -221,3 +221,5 @@ campsiteRouter.route('/:campsiteId/comments/:commentId')
 });
 
 module.exports = campsiteRouter;
+
+//week 3 update
