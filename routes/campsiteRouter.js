@@ -114,41 +114,11 @@ campsiteRouter.route('/:campsiteId/comments')
     })
     .catch(err => next(err));
 })
-.put(authenticate.verifyUser, (req, res, next) => {
-    Campsite.findById(req.params.campsiteId)
-    .then(campsite => {
-        if (campsite && campsite.comments.id(req.params.commentId)) {
-            if((campsite.comments.id(req.params.commentId).author._id).equals(req.user._id)) {
-                if (req.body.rating) {
-                    campsite.comments.id(req.params.commentId).rating = req.body.rating;
-                }
-                if (req.body.text) {
-                    campsite.comments.id(req.params.commentId).text = req.body.text;
-                }
-                campsite.save()
-                .then(campsite => {
-                    res.statusCode = 200;
-                    res.setHeader('Content-Type', 'application/json');
-                    res.json(campsite);
-                })
-                .catch(err => next(err));
-            } else {
-                const err = new Error('You are not authorized to update this comment!');
-                err.status = 403;
-                return next(err);
-            }
-        } else if (!campsite) {
-            const err = new Error(`Campsite ${req.params.campsiteId} not found`);
-            err.status = 404;
-            return next(err);
-        } else {
-            const err = new Error(`Comment ${req.params.commentId} not found`);
-            err.status = 404;
-            return next(err);
-        }
-    })
-    .catch(err => next(err));
+.put(authenticate.verifyUser,authenticate.verifyAdmin,  (req, res) => {
+    res.statusCode = 403;
+    res.end('PUT operation not supported on /campsites');
 })
+
 .delete(authenticate.verifyUser,authenticate.verifyAdmin,  (req, res, next) => {
     Campsite.findById(req.params.campsiteId)
     .then(campsite => {
@@ -197,23 +167,28 @@ campsiteRouter.route('/:campsiteId/comments/:commentId')
     res.statusCode = 403;
     res.end(`POST operation not supported on /campsites/${req.params.campsiteId}/comments/${req.params.commentId}`);
 })
-.put(authenticate.verifyUser,authenticate.verifyAdmin,  (req, res, next) => {
+.put(authenticate.verifyUser, (req, res, next) => {
     Campsite.findById(req.params.campsiteId)
     .then(campsite => {
         if (campsite && campsite.comments.id(req.params.commentId)) {
-            if (req.body.rating) {
-                campsite.comments.id(req.params.commentId).rating = req.body.rating;
+            if((campsite.comments.id(req.params.commentId).author._id).equals(req.user._id)) {
+                if (req.body.rating) { //check for if new rating has been passed and then update rating
+                    campsite.comments.id(req.params.commentId).rating = req.body.rating;
+                }
+                if (req.body.text) {
+                    campsite.comments.id(req.params.commentId).text = req.body.text;
+                }//can update both, either or neither of the above
+                campsite.save() //to save this change to database need to use save() method
+                .then(campsite => {
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'application/json');
+                    res.json(campsite);
+                })
+                .catch(err => next(err));
+            } else {
+                res.statusCode = 403;
+                res.end('you are not auth');
             }
-            if (req.body.text) {
-                campsite.comments.id(req.params.commentId).text = req.body.text;
-            }
-            campsite.save()
-            .then(campsite => {
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json');
-                res.json(campsite);
-            })
-            .catch(err => next(err));
         } else if (!campsite) {
             err = new Error(`Campsite ${req.params.campsiteId} not found`);
             err.status = 404;
@@ -226,18 +201,23 @@ campsiteRouter.route('/:campsiteId/comments/:commentId')
     })
     .catch(err => next(err));
 })
-.delete(authenticate.verifyUser,authenticate.verifyAdmin,  (req, res, next) => {
+.delete(authenticate.verifyUser, (req, res, next) => {
     Campsite.findById(req.params.campsiteId)
     .then(campsite => {
         if (campsite && campsite.comments.id(req.params.commentId)) {
-            campsite.comments.id(req.params.commentId).remove();
-            campsite.save()
-            .then(campsite => {
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json');
-                res.json(campsite);
-            })
-            .catch(err => next(err));
+            if((campsite.comments.id(req.params.commentId).author._id).equals(req.user._id)) {
+                campsite.comments.id(req.params.commentId).remove();
+                campsite.save()
+                .then(campsite => {
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'application/json');
+                    res.json(campsite);
+                })
+                .catch(err => next(err));
+            } else {
+                res.statusCode = 403;
+                res.end('you are not auth');
+            }
         } else if (!campsite) {
             err = new Error(`Campsite ${req.params.campsiteId} not found`);
             err.status = 404;
