@@ -4,6 +4,7 @@ var path = require('path');
 var logger = require('morgan');
 const passport = require('passport');
 const config = require('./config');
+const favoriteRouter = require('./routes/favoriteRouter');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -71,7 +72,7 @@ app.use('/campsites', campsiteRouter);
 app.use('/promotions', promotionRouter);
 app.use('/partners', partnerRouter);
 app.use('/imageUpload', uploadRouter);
-
+app.use('/favorites', favoriteRouter);
 
 
 // catch 404 and forward to error handler
